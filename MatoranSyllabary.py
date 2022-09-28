@@ -414,12 +414,15 @@ def draw_letter(letter, draw, x, coda_to, aspirated):
                 aspiration_queue.append((x1, y1, x2, y2))
             else:
                 draw.line((x1, y1, x2, y2), fill=LINE_COLOR, width=CONSONANT_WIDTH if coda_to is None else CONSONANT_WIDTH_CODA)
-        elif shape["type"] == "center-rect":
-            #TODO coda
-            draw.rectangle((cx - CONSONANT_WIDTH // 2, cy - CONSONANT_WIDTH // 2, cx + CONSONANT_WIDTH / 2, cy + CONSONANT_WIDTH / 2), fill=LINE_COLOR)
-        elif shape["type"] == "center-diamond":
-            #TODO coda
-            draw.regular_polygon((cx, cy, CONSONANT_WIDTH / 2), 4, rotation=45, fill=LINE_COLOR)
+        else:
+            if coda_to is not None:
+                cx = cx + LETTERS[coda_to][0]["x"] * SIZE / 2
+                cy = cy + LETTERS[coda_to][0]["y"] * SIZE / 2
+            width = CONSONANT_WIDTH if coda_to is None else CONSONANT_WIDTH_CODA
+            if shape["type"] == "center-rect":
+                draw.rectangle((cx - width // 2, cy - width // 2, cx + width / 2, cy + width / 2), fill=LINE_COLOR)
+            elif shape["type"] == "center-diamond":
+                draw.regular_polygon((cx, cy, width / 2), 4, rotation=45, fill=LINE_COLOR)
     for line in aspiration_queue:
         draw.line(line, fill=BG_COLOR, width=CONSONANT_GAP_ASPIRATED if coda_to is None else CONSONANT_GAP_CODA_ASPIRATED)
     if coda_to is not None:
