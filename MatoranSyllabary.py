@@ -11,6 +11,9 @@ BASE_WIDTH = 10
 CONSONANT_WIDTH = 7
 CONSONANT_WIDTH_ASPIRATED = 10
 CONSONANT_GAP_ASPIRATED = 4
+CONSONANT_WIDTH_CODA = 3
+CONSONANT_WIDTH_CODA_ASPIRATED = 6
+CONSONANT_GAP_CODA_ASPIRATED = 2
 VOWEL_WIDTH = 5
 VOWEL_SIZE = SIZE / 4
 
@@ -382,15 +385,14 @@ LETTERS = {
 }
 
 def draw_base(draw, x):
-    #draw.ellipse((x-1, SPACING-1, x + SIZE+1, SPACING + SIZE+1), fill=FILL_COLOR, outline=(192, 0, 0), width=BASE_WIDTH + 2)
     draw.ellipse((x, SPACING, x + SIZE, SPACING + SIZE), fill=TRANSPARENT, outline=LINE_COLOR, width=BASE_WIDTH)
 
 def draw_letter(letter, draw, x, coda_to, aspirated):
     shapes = LETTERS[letter]
-    cx = x + SIZE / 2
-    cy = SPACING + SIZE / 2
     aspiration_queue = []
     for shape in shapes:
+        cx = x + SIZE / 2
+        cy = SPACING + SIZE / 2
         if shape["type"] == "circle":
             ccx = cx + shape["x"] * SIZE / 2
             ccy = cy + shape["y"] * SIZE / 2
@@ -398,16 +400,20 @@ def draw_letter(letter, draw, x, coda_to, aspirated):
             circle_y = ccy - VOWEL_SIZE / 2
             draw.ellipse((circle_x, circle_y, circle_x + VOWEL_SIZE, circle_y + VOWEL_SIZE), fill=FILL_COLOR, outline=LINE_COLOR, width=VOWEL_WIDTH)
         elif shape["type"] == "line":
-            #TODO if coda_to is not None: position it inside that vowel instead
-            x1 = cx + shape["x1"] * SIZE / 2
-            y1 = cy + shape["y1"] * SIZE / 2
-            x2 = cx + shape["x2"] * SIZE / 2
-            y2 = cy + shape["y2"] * SIZE / 2
+            size = SIZE
+            if coda_to is not None:
+                size = VOWEL_SIZE
+                cx = cx + LETTERS[coda_to][0]["x"] * SIZE / 2
+                cy = cy + LETTERS[coda_to][0]["y"] * SIZE / 2
+            x1 = cx + shape["x1"] * size / 2
+            y1 = cy + shape["y1"] * size / 2
+            x2 = cx + shape["x2"] * size / 2
+            y2 = cy + shape["y2"] * size / 2
             if aspirated:
-                draw.line((x1, y1, x2, y2), fill=LINE_COLOR, width=CONSONANT_WIDTH_ASPIRATED)
+                draw.line((x1, y1, x2, y2), fill=LINE_COLOR, width=CONSONANT_WIDTH_ASPIRATED if coda_to is None else CONSONANT_WIDTH_CODA_ASPIRATED)
                 aspiration_queue.append((x1, y1, x2, y2))
             else:
-                draw.line((x1, y1, x2, y2), fill=LINE_COLOR, width=CONSONANT_WIDTH)
+                draw.line((x1, y1, x2, y2), fill=LINE_COLOR, width=CONSONANT_WIDTH if coda_to is None else CONSONANT_WIDTH_CODA)
         elif shape["type"] == "center-rect":
             #TODO coda
             draw.rectangle((cx - CONSONANT_WIDTH // 2, cy - CONSONANT_WIDTH // 2, cx + CONSONANT_WIDTH / 2, cy + CONSONANT_WIDTH / 2), fill=LINE_COLOR)
@@ -415,7 +421,18 @@ def draw_letter(letter, draw, x, coda_to, aspirated):
             #TODO coda
             draw.regular_polygon((cx, cy, CONSONANT_WIDTH / 2), 4, rotation=45, fill=LINE_COLOR)
     for line in aspiration_queue:
-        draw.line(line, fill=BG_COLOR, width=CONSONANT_GAP_ASPIRATED)
+        draw.line(line, fill=BG_COLOR, width=CONSONANT_GAP_ASPIRATED if coda_to is None else CONSONANT_GAP_CODA_ASPIRATED)
+    if coda_to is not None:
+        #redraw the coda circle but transparent this time
+        #yes we really need to draw it twice, once to overwrite the consonant and once to cover the coda edges
+        cx = x + SIZE / 2
+        cy = SPACING + SIZE / 2
+        shape = LETTERS[coda_to][0]
+        ccx = cx + shape["x"] * SIZE / 2
+        ccy = cy + shape["y"] * SIZE / 2
+        circle_x = ccx - VOWEL_SIZE / 2
+        circle_y = ccy - VOWEL_SIZE / 2
+        draw.ellipse((circle_x, circle_y, circle_x + VOWEL_SIZE, circle_y + VOWEL_SIZE), fill=TRANSPARENT, outline=LINE_COLOR, width=VOWEL_WIDTH)
 
 def main():
     word = sys.argv[1:]
