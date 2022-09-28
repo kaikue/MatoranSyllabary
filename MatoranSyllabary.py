@@ -1,5 +1,4 @@
 import sys
-from turtle import width
 from PIL import Image, ImageDraw
 
 TRANSPARENT = (0, 0, 0, 0)
